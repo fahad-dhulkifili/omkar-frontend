@@ -23,7 +23,6 @@ export default function Home() {
         <ServicesOverview
           heading={data.servicesHeading}
           subheading={data.servicesSubheading}
-          services={data.featuredServices}
         />
       </Reveal>
       <Reveal>
