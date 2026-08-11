@@ -5,11 +5,13 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import styled, { css } from "styled-components";
 import { Container } from "./Container";
+import { useServicePillars } from "@/lib/queries";
+import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
+  { href: "/services", label: "Services", hasDropdown: true },
   { href: "/process", label: "Process" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/contact", label: "Contact" },
@@ -22,6 +24,9 @@ interface NavbarProps {
 export default function Navbar({ transparent = false }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const { data: pillars } = useServicePillars();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!transparent) return;
@@ -48,11 +53,43 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           </Logo>
 
           <DesktopLinks>
-            {NAV_LINKS.map((link) => (
-              <NavLink key={link.href} href={link.href} $isLight={isLight}>
-                {link.label}
-              </NavLink>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.hasDropdown && pillars && pillars.length > 0 ? (
+                <DropdownWrap
+                  key={link.href}
+                  onMouseEnter={() => setServicesOpen(true)}
+                  onMouseLeave={() => setServicesOpen(false)}
+                >
+                  <NavLink
+                    key={link.href}
+                    href={link.href}
+                    $isLight={isLight}
+                    $active={pathname.startsWith("/services")}
+                  >
+                    {link.label}
+                  </NavLink>
+                  <Dropdown $open={servicesOpen}>
+                    {pillars.map((pillar) => (
+                      <DropdownLink
+                        key={pillar.documentId}
+                        href={`/services/${pillar.slug}`}
+                      >
+                        {pillar.name}
+                      </DropdownLink>
+                    ))}
+                  </Dropdown>
+                </DropdownWrap>
+              ) : (
+                <NavLink
+                  key={link.href}
+                  href={link.href}
+                  $isLight={isLight}
+                  $active={pathname === link.href}
+                >
+                  {link.label}
+                </NavLink>
+              ),
+            )}
           </DesktopLinks>
 
           <CTAButton href="/contact">Get in Touch</CTAButton>
@@ -71,13 +108,37 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
       <MobileMenu $open={menuOpen}>
         {NAV_LINKS.map((link) => (
-          <MobileLink
-            key={link.href}
-            href={link.href}
-            onClick={() => setMenuOpen(false)}
-          >
-            {link.label}
-          </MobileLink>
+          <div key={link.href}>
+            <MobileLink
+              href={link.href}
+              onClick={() => {
+                if (link.hasDropdown) {
+                  setServicesOpen(!servicesOpen);
+                } else {
+                  setMenuOpen(false);
+                }
+              }}
+            >
+              {link.label}
+              {link.hasDropdown && <Chevron $open={servicesOpen}>›</Chevron>}
+            </MobileLink>
+            {link.hasDropdown && servicesOpen && pillars && (
+              <MobileSubMenu>
+                {pillars.map((pillar) => (
+                  <MobileSubLink
+                    key={pillar.documentId}
+                    href={`/services/${pillar.slug}`}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setServicesOpen(false);
+                    }}
+                  >
+                    {pillar.name}
+                  </MobileSubLink>
+                ))}
+              </MobileSubMenu>
+            )}
+          </div>
         ))}
       </MobileMenu>
     </Nav>
@@ -126,11 +187,66 @@ const DesktopLinks = styled.div`
   }
 `;
 
-const NavLink = styled(Link)<{ $isLight: boolean }>`
+const DropdownWrap = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const Dropdown = styled.div<{ $open: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%)
+    translateY(${({ $open }) => ($open ? "12px" : "4px")});
+  min-width: 320px;
+  background: ${({ theme }) => theme.colors.white};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  border-top: 2px solid ${({ theme }) => theme.colors.primary};
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
+  transition: all ${({ theme }) => theme.transitions.base};
+  z-index: 200;
+
+  /* invisible bridge so hover doesn't drop when moving into the menu */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 0;
+    right: 0;
+    height: 14px;
+  }
+`;
+
+const DropdownLink = styled(Link)`
+  display: block;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.medium};
-  color: ${({ $isLight, theme }) =>
-    $isLight ? "rgba(255, 255, 255, 0.85)" : theme.colors.charcoal};
+  color: ${({ theme }) => theme.colors.charcoal};
+  transition: all ${({ theme }) => theme.transitions.base};
+  border-left: 2px solid transparent;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.offWhite};
+    color: ${({ theme }) => theme.colors.primary};
+    border-left-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const NavLink = styled(Link)<{ $isLight: boolean; $active?: boolean }>`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  color: ${({ $isLight, $active, theme }) =>
+    $active
+      ? $isLight
+        ? theme.colors.white
+        : theme.colors.primary
+      : $isLight
+        ? "rgba(255, 255, 255, 0.85)"
+        : theme.colors.charcoal};
   text-transform: uppercase;
   letter-spacing: 0.05em;
   position: relative;
@@ -141,18 +257,14 @@ const NavLink = styled(Link)<{ $isLight: boolean }>`
     position: absolute;
     left: 0;
     bottom: -4px;
-    width: 0;
+    width: ${({ $active }) => ($active ? "100%" : "0")};
     height: 1px;
     background: ${({ theme }) => theme.colors.primary};
     transition: width ${({ theme }) => theme.transitions.base};
   }
 
-  &:hover {
-    color: ${({ $isLight, theme }) =>
-      $isLight ? theme.colors.white : theme.colors.primary};
-    &::after {
-      width: 100%;
-    }
+  &:hover::after {
+    width: 100%;
   }
 `;
 
@@ -202,7 +314,7 @@ const MobileMenu = styled.div<{ $open: boolean }>`
     $open ? theme.spacing.lg : "0 " + theme.spacing.lg};
   border-top: ${({ $open, theme }) =>
     $open ? "1px solid " + theme.colors.grayLighter : "none"};
-  max-height: ${({ $open }) => ($open ? "400px" : "0")};
+  max-height: ${({ $open }) => ($open ? "600px" : "0")};
   overflow: hidden;
   transition:
     max-height ${({ theme }) => theme.transitions.slow},
@@ -214,13 +326,42 @@ const MobileMenu = styled.div<{ $open: boolean }>`
 `;
 
 const MobileLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: ${({ theme }) => theme.spacing.sm} 0;
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.medium};
   color: ${({ theme }) => theme.colors.charcoal};
   border-bottom: 1px solid ${({ theme }) => theme.colors.grayLighter};
+`;
+
+const Chevron = styled.span<{ $open: boolean }>`
+  display: inline-block;
+  transition: transform ${({ theme }) => theme.transitions.base};
+  transform: rotate(${({ $open }) => ($open ? "90deg" : "0deg")});
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+`;
+
+const MobileSubMenu = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-left: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.offWhite};
+`;
+
+const MobileSubLink = styled(Link)`
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.grayDark};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grayLighter};
 
   &:last-child {
     border-bottom: none;
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;

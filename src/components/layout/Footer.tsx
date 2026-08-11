@@ -65,7 +65,8 @@ const FooterWrapper = styled.footer`
   color: ${({ theme }) => theme.colors.grayLight};
   padding: ${({ theme }) => theme.spacing["3xl"]} 0
     ${({ theme }) => theme.spacing.lg};
-  margin-top: ${({ theme }) => theme.spacing["4xl"]};
+  padding-top: ${({ theme }) => theme.spacing["4xl"]};
+  border-top: 5px solid rgba(255, 255, 255, 0.1);
 `;
 
 const Grid = styled.div`

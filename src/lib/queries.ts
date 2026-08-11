@@ -11,6 +11,7 @@ import type {
   ProcessPage,
   ContactPage,
   ClientSector,
+  ServicePillar,
 } from "./types";
 
 const POPULATE_ALL = "*";
@@ -84,5 +85,42 @@ export function useClientSectors() {
         pagination: { pageSize: 100 },
       }),
     select: (res) => res.data,
+  });
+}
+
+// ─── Service Pillars (deep populate: pillars → subServices → bullets) ───
+
+const PILLAR_POPULATE = {
+  heroImage: true,
+  subServices: {
+    populate: {
+      bullets: true,
+    },
+  },
+};
+
+export function useServicePillars() {
+  return useQuery({
+    queryKey: ["service-pillars"],
+    queryFn: () =>
+      fetchStrapi<StrapiCollectionResponse<ServicePillar>>("service-pillars", {
+        populate: PILLAR_POPULATE,
+        sort: "order:asc",
+        pagination: { pageSize: 100 },
+      }),
+    select: (res) => res.data,
+  });
+}
+
+export function useServicePillar(slug: string) {
+  return useQuery({
+    queryKey: ["service-pillar", slug],
+    queryFn: () =>
+      fetchStrapi<StrapiCollectionResponse<ServicePillar>>("service-pillars", {
+        populate: PILLAR_POPULATE,
+        filters: { slug: { $eq: slug } },
+      }),
+    select: (res) => res.data[0] ?? null,
+    enabled: !!slug,
   });
 }

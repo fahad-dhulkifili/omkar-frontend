@@ -11,6 +11,24 @@ interface StrapiRequestOptions {
   };
 }
 
+/**
+ * Recursively flattens a nested object into Strapi's bracket query syntax.
+ */
+function flatten(
+  params: URLSearchParams,
+  obj: Record<string, unknown>,
+  prefix: string,
+) {
+  Object.entries(obj).forEach(([key, value]) => {
+    const newKey = `${prefix}[${key}]`;
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      flatten(params, value as Record<string, unknown>, newKey);
+    } else {
+      params.append(newKey, String(value));
+    }
+  });
+}
+
 function buildQueryString(options: StrapiRequestOptions): string {
   const params = new URLSearchParams();
 
@@ -18,21 +36,12 @@ function buildQueryString(options: StrapiRequestOptions): string {
     if (typeof options.populate === "string") {
       params.append("populate", options.populate);
     } else {
-      const flattenPopulate = (
-        obj: Record<string, unknown>,
-        prefix = "populate",
-      ) => {
-        Object.entries(obj).forEach(([key, value]) => {
-          const newKey = `${prefix}[${key}]`;
-          if (typeof value === "object" && value !== null) {
-            flattenPopulate(value as Record<string, unknown>, newKey);
-          } else {
-            params.append(newKey, String(value));
-          }
-        });
-      };
-      flattenPopulate(options.populate);
+      flatten(params, options.populate, "populate");
     }
+  }
+
+  if (options.filters) {
+    flatten(params, options.filters, "filters");
   }
 
   if (options.sort) {

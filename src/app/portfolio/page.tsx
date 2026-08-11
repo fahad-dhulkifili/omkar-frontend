@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import { Container } from "@/components/layout/Container";
 import CTASection from "@/components/home/CTASection";
 import Reveal from "@/components/layout/Reveal";
+import { Award } from "lucide-react";
 
 export default function PortfolioPage() {
   const { data: sectors, isLoading, error } = useClientSectors();
@@ -19,18 +20,25 @@ export default function PortfolioPage() {
       <Navbar />
       <Header>
         <Container>
-          <Eyebrow>Our Clients &amp; References</Eyebrow>
-          <Heading>
-            From the Nation's
-            <br />
-            <Highlight>Most Trusted Institutions.</Highlight>
-          </Heading>
-          <Lead>
-            Over 20 years, we have served institutions where there is no margin
-            for error — starting with the Ministry of Defence, and expanding
-            into public sector bodies, central government departments, and
-            India's largest FMCG companies.
-          </Lead>
+          <HeaderInner>
+            <HeaderContent>
+              <Eyebrow>Our Clients &amp; References</Eyebrow>
+              <Heading>
+                From the Nation's
+                <br />
+                <Highlight>Most Trusted Institutions.</Highlight>
+              </Heading>
+              <Lead>
+                Over 20 years, we have served institutions where there is no
+                margin for error — starting with the Ministry of Defence, and
+                expanding into public sector bodies, central government
+                departments, and India's largest FMCG companies.
+              </Lead>
+            </HeaderContent>
+            <HeaderIcon>
+              <Award size={220} strokeWidth={0.75} />
+            </HeaderIcon>
+          </HeaderInner>
         </Container>
       </Header>
       <Reveal>
@@ -94,6 +102,32 @@ const Header = styled.section`
     ${({ theme }) => theme.spacing["2xl"]};
   background: ${({ theme }) => theme.colors.white};
   margin-top: 80px;
+`;
+const HeaderInner = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const HeaderContent = styled.div`
+  position: relative;
+  z-index: 1;
+`;
+
+const HeaderIcon = styled.div`
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${({ theme }) => theme.colors.primary};
+  opacity: 0.06;
+  pointer-events: none;
+  line-height: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    display: none;
+  }
 `;
 
 const Eyebrow = styled.div`

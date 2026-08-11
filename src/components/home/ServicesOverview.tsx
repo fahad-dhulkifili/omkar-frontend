@@ -1,22 +1,25 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import styled from 'styled-components';
-import { Container } from '@/components/layout/Container';
-import type { ServiceItem } from '@/lib/types';
+import Link from "next/link";
+import styled from "styled-components";
+import { ShieldCheck, Building2, Users, Wallet, Briefcase } from "lucide-react";
+import { Container } from "@/components/layout/Container";
+import { useServicePillars } from "@/lib/queries";
 
 interface ServicesOverviewProps {
   heading?: string;
   subheading?: string;
-  services: ServiceItem[];
 }
+
+const CARD_ICONS = [ShieldCheck, Building2, Users, Wallet, Briefcase];
 
 export default function ServicesOverview({
   heading,
   subheading,
-  services,
 }: ServicesOverviewProps) {
-  if (!services || services.length === 0) return null;
+  const { data: pillars } = useServicePillars();
+
+  if (!pillars || pillars.length === 0) return null;
 
   return (
     <Section>
@@ -24,21 +27,30 @@ export default function ServicesOverview({
         <Header>
           <HeaderLeft>
             <Eyebrow>What We Deliver</Eyebrow>
-            <Title>
-              {heading || 'Spectrum of Services'}
-            </Title>
+            <Title>{heading || "Spectrum of Services"}</Title>
           </HeaderLeft>
           {subheading && <Lead>{subheading}</Lead>}
         </Header>
 
         <Grid>
-          {services.map((service, index) => (
-            <Card key={service.id}>
-              <CardNumber>{String(index + 1).padStart(2, '0')}</CardNumber>
-              <CardTitle>{service.title}</CardTitle>
-              <CardDescription>{service.description}</CardDescription>
-            </Card>
-          ))}
+          {pillars.map((pillar, index) => {
+            const Icon = CARD_ICONS[index % CARD_ICONS.length];
+            return (
+              <Card key={pillar.documentId} href={`/services/${pillar.slug}`}>
+                <BgIcon>
+                  <Icon size={96} strokeWidth={1} />
+                </BgIcon>
+                <CardNumber>{String(index + 1).padStart(2, "0")}</CardNumber>
+                <CardTitle>{pillar.name}</CardTitle>
+                {pillar.tagline && (
+                  <CardDescription>{pillar.tagline}</CardDescription>
+                )}
+                <CardLink>
+                  Explore <Arrow>→</Arrow>
+                </CardLink>
+              </Card>
+            );
+          })}
         </Grid>
 
         <Footer>
@@ -53,17 +65,17 @@ export default function ServicesOverview({
 }
 
 const Section = styled.section`
-  padding: ${({ theme }) => theme.spacing['4xl']} 0
-    ${({ theme }) => theme.spacing['3xl']};
+  padding: ${({ theme }) => theme.spacing["4xl"]} 0
+    ${({ theme }) => theme.spacing["3xl"]};
   background: ${({ theme }) => theme.colors.offWhite};
 `;
 
 const Header = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing['2xl']};
+  gap: ${({ theme }) => theme.spacing["2xl"]};
   align-items: end;
-  margin-bottom: ${({ theme }) => theme.spacing['2xl']};
+  margin-bottom: ${({ theme }) => theme.spacing["2xl"]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     grid-template-columns: 1fr;
@@ -107,32 +119,50 @@ const Lead = styled.p`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   background: ${({ theme }) => theme.colors.grayLighter};
   border: 1px solid ${({ theme }) => theme.colors.grayLighter};
 
-  @media (max-width: ${({ theme }) => theme.breakpoints.laptop}) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     grid-template-columns: 1fr;
   }
 `;
 
-const Card = styled.article`
+const Card = styled(Link)`
   background: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing['2xl']}
+  padding: ${({ theme }) => theme.spacing["2xl"]}
     ${({ theme }) => theme.spacing.xl};
   position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   transition: all ${({ theme }) => theme.transitions.base};
   border-bottom: 2px solid transparent;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.white};
     border-bottom-color: ${({ theme }) => theme.colors.primary};
     transform: translateY(-4px);
   }
 `;
 
+const BgIcon = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.lg};
+  right: ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.colors.primary};
+  opacity: 0.07;
+  pointer-events: none;
+  line-height: 0;
+  transition: opacity ${({ theme }) => theme.transitions.base};
+
+  ${Card}:hover & {
+    opacity: 0.12;
+  }
+`;
+
 const CardNumber = styled.div`
+  position: relative;
   font-family: ${({ theme }) => theme.fonts.heading};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.regular};
@@ -143,7 +173,8 @@ const CardNumber = styled.div`
 `;
 
 const CardTitle = styled.h3`
-  font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  position: relative;
+  font-size: ${({ theme }) => theme.fontSizes["2xl"]};
   color: ${({ theme }) => theme.colors.navy};
   margin-bottom: ${({ theme }) => theme.spacing.md};
   font-weight: ${({ theme }) => theme.fontWeights.regular};
@@ -151,13 +182,33 @@ const CardTitle = styled.h3`
 `;
 
 const CardDescription = styled.p`
+  position: relative;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   line-height: 1.7;
   color: ${({ theme }) => theme.colors.grayDark};
+  flex: 1;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+const CardLink = styled.span`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: ${({ theme }) => theme.colors.navy};
+
+  ${Card}:hover & {
+    color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const Footer = styled.div`
-  margin-top: ${({ theme }) => theme.spacing['2xl']};
+  margin-top: ${({ theme }) => theme.spacing["2xl"]};
   display: flex;
   justify-content: center;
 `;
@@ -186,7 +237,7 @@ const Arrow = styled.span`
   display: inline-block;
   transition: transform ${({ theme }) => theme.transitions.base};
 
-  ${ViewAllLink}:hover & {
+  ${ViewAllLink}:hover &, ${Card}:hover & {
     transform: translateX(4px);
   }
 `;

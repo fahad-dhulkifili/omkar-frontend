@@ -214,3 +214,29 @@ export interface ClientSector extends StrapiBaseFields {
   rolesDeployed: Role[];
   order: number;
 }
+
+// ─── Service Pillar structure ───
+
+export interface ServiceBullet {
+  id: number;
+  text: string;
+}
+
+export interface SubService {
+  id: number;
+  title: string;
+  description?: string;
+  bullets: ServiceBullet[];
+}
+
+export interface ServicePillar extends StrapiBaseFields {
+  name: string;
+  slug: string;
+  tagline?: string;
+  introduction?: string;
+  h1Header?: string;
+  metaDescription?: string;
+  heroImage?: StrapiMedia | null;
+  subServices: SubService[];
+  order: number;
+}
