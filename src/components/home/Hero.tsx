@@ -186,7 +186,7 @@ const Tagline = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.lg};
   font-style: italic;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${({ theme }) => theme.colors.white};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
   max-width: 480px;
   font-family: ${({ theme }) => theme.fonts.heading};
